@@ -1,0 +1,139 @@
+#! /usr/bin/bash
+
+cd ./$name 
+PS3="$PWD "
+select  variable in "Add Table" "Delete Table" "list Tables"  "Insert into Table" "Select" "Remove from Table" "Update Table"
+do
+    case $variable in
+        "Add Table")
+            flg1=1
+            cnt1=0
+            while [ $flg1 -eq 1 ]
+            do
+		cnt1=0
+                read -p "Please Enter Table Name: " name1
+                fc1=${name1:0:1}
+                if [[ ! $fc1 =~ [a-zA-Z] ]]; then
+                    echo "Name must start with an alphabet"
+                    cnt1=$((cnt1+1))
+                #fi
+                elif [[ ! $name1 =~ ^[a-zA-Z0-9_]+$ ]]; then
+                    echo "The name can only consist of letters, numbers, and _"
+                    cnt1=$((cnt1+1))
+                #fi
+		elif [ -e "$name1" ]; then
+		    echo "This table already exists"
+		    cnt1=$((cnt1+1))
+		else
+		    touch "$name1"
+		    touch "${name1}.meta"
+		    echo "Table '$name1' created successfully"
+		fi
+                if [ $cnt1 -gt 0 ]; then
+                    flg1=1
+                else
+                    flg1=0
+                fi
+            done
+            f2=0
+            while [ $f2 -eq 0 ]
+            do
+                read -p "How many fields do you want? " fields 
+                if [[ ! $fields =~ ^[0-9]+$ ]] ; then
+                    echo "Please enter a valid number"
+                else
+                    for (( i=0; i<$fields; i++ ))
+                    do
+                        flg1=1
+                        cnt1=0
+                        while [ $flg1 -eq 1 ]
+                        do
+			    cnt1=0
+                            read -p "Please Enter Column $((i+1)) Name: " fname
+                            fc1=${fname:0:1}
+                            if [[ ! $fc1 =~ [a-zA-Z] ]]; then
+                                echo "Column name must start with an alphabet"
+                                cnt1=$((cnt1+1))
+                            #fi
+                            elif [[ ! $fname =~ ^[a-zA-Z0-9_]+$ ]]; then
+                                echo "The column name can only consist of letters, numbers, and _"
+                                cnt1=$((cnt1+1))
+                            #fi
+                            elif cat "${name1}.meta" | grep -q "$fname"; then
+                                echo "This column already exists"
+				cnt1=$((cnt1+1))
+                            else
+                                echo -n "${fname}:" >> "${name1}.meta"
+                            fi
+                            if [ $cnt1 -gt 0 ]; then
+                                flg1=1
+                            else
+                                flg1=0
+                            fi
+                        done
+                    done
+                    f2=1
+                fi
+            done
+		echo " " >> "${name1}.meta"
+		for (( n=0; n<$fields; n++ ))	
+		do	
+			echo "Select column $((n+1)) type: "
+			select v in "Number" "Text"
+			do
+			    case $v in
+			    	"Number" )
+					echo -n "int:" >> "${name1}.meta"
+					break
+				;;
+			    	"Text" )
+					echo -n "str:" >> "${name1}.meta"
+					break	
+				;;
+			    esac
+			done
+		done
+		echo "Table created successfully"
+            ;;
+	
+        "Remove Table")
+            f1=0
+            while [ $f1 -eq 0 ]
+            do
+                read -p "Please Enter Table Name: " name1
+                if [ -f "$name1" ]; then
+                    rm -ir $name1
+		    rm "${name1}.meta"
+		    echo "Table removed successfully"
+                    f1=1
+                elif [[ ! $name1 =~ ^[a-zA-Z0-9_]+$ ]]; then
+                    echo "The name can only consist of letters, numbers, and _"
+                    f1=0
+                else
+                    echo "Error no such table"
+                    f1=0
+                fi
+            done
+            ;;
+        
+        "List Tables")
+            ls -F | grep -v / | grep -v ".meta"
+            ;;
+	"Insert into Table")
+	    cd $OLDPWD
+            source ./scripts/insert 
+            ;;
+	"Select")
+	    cd $OLDPWD
+            source ./scripts/select
+            ;;
+	"Remove from Table")
+	    cd $OLDPWD
+            source ./scripts/remove
+            ;;
+	"Update Table" )
+	    cd $OLDPWD
+            source ./scripts/update
+            ;;
+    esac
+done

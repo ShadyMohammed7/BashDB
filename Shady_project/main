@@ -1,0 +1,84 @@
+#! /usr/bin/bash
+
+current_dir="$(dirname "$(realpath "$0")")"
+cd $current_dir
+PS3="$PWD " 
+
+select  variable in "Create DB" "Connect DB" "list DB" "Remove DB"
+do 
+    case $variable in 
+        "Create DB") 
+	    flg=1
+	    cnt=0 
+	while [ $flg -eq 1 ]
+	do
+            read -p " Please Enter DB Name : " name
+	    fc=${name:0:1}
+	    if [[ ! $fc =~ [a-zA-Z] ]]; then
+	       echo "Name must start with an alphabet"
+	       cnt=$((cnt+1))
+	    fi
+	    if [[ ! $name =~ ^[a-zA-Z0-9_]+$ ]]; then
+		echo "The name can only consist of letters, numbers and _ "
+		cnt=$((cnt+1))
+	    fi
+            if [ -e $name ] ; then
+                echo "This name already exists"
+		cnt=$((cnt+1))
+            else
+                mkdir $name 
+		cd ./$name
+	        PS3="$PWD "
+            fi
+	    if [ $cnt -gt 0 ]; then
+		flg=1
+	    else
+		flg=0
+	    fi
+	done 
+        ;;
+        "Connect DB") 
+	    f=0	
+	    while [ $f -eq 0 ]
+	    do
+		    read -p " Please Enter DB Name : " name 
+		    if [ -d $name ] ; then
+		       f=1
+		       source ./scripts/table
+		    elif [[ ! $name =~ ^[a-zA-Z0-9_]+$ ]]; then
+			echo "The name can only consist of letters, numbers and _ "
+			f=0
+		    else
+		       echo "Error no such DB "
+		       f=0
+		    fi
+	    done
+		;; 
+        "list DB" ) 
+	    cd ./
+	    PS3="$PWD "
+            ls -F | grep / | grep -v scripts
+        ;; 
+        "Remove DB" ) 
+	    f=0	
+	    while [ $f -eq 0 ]
+	    do
+		    read -p " Please Enter DB Name : " name 
+		    if [ -d $name ] ; then
+		        rm -ir $name
+			f=1
+		    elif [[ ! $name =~ ^[a-zA-Z0-9_]+$ ]]; then
+			echo "The name can only consist of letters, numbers and _ "
+		      	f=0
+		    else
+		       echo "Error no such DB "
+		       f=0
+		    fi
+	    done
+        ;;
+        *) 
+        exit
+    esac
+
+ done
+

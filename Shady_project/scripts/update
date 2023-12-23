@@ -1,0 +1,90 @@
+#!/usr/bin/bash
+
+cd ./$name
+PS3="$PWD "
+f=0
+while [ $f -eq 0 ]; do
+    read -p "Please Enter table Name: " tname 
+    if [ -e "$tname" ]; then
+        f=1
+        fv=0
+        while [ $fv -eq 0 ]; do
+            fv1=0
+            while [ $fv1 -eq 0 ]; do
+                fv1=0
+                read -p "Please enter ID: " f
+                if grep -q "^$f:" "$tname"; then
+                    y=$(awk -F : -v val="$f" -v d="$x" '{for (i=1; i<NF; i++) { if (i == d && $i == val) { print NR } } }' "$tname")
+                    fn=0
+                    while [ $fn -eq 0 ]; do
+                        fn=1
+                        read -p "Please enter the column you want to update: " cn
+                        if grep -q "$cn" "${tname}.meta"; then
+                            fn1=0
+                            x=$(awk -F : -v col="$cn" 'NR==1{ for (i = 1; i < NF; i++) if ($i == col) print i }' "${tname}.meta")
+                            d=0
+			    u=0
+			    while [ $u -eq 0 ]
+			    do
+			    u=0
+                            read -p "Please enter the new value: " nv
+                            y=$(awk -F : -v col="$x" 'NR==2{ print $col }' "${tname}.meta")
+                            if [[ $y == "int" ]]; then
+                                if [[ $nv =~ ^[0-9]+$ ]]; then
+                                    if (( $x == 1 )) && grep -q "^$nv:" "$tname"; then
+                                        echo "Can't have repetitions in Primary Key."
+                                        d=$((d+1))
+                                    else
+                                        sed -i "s/^$f:.*:/$f:$nv:/g" "$tname"
+					echo "Column updated succesfully"
+					exit
+                                    fi
+                                else
+                                    echo "Error not a valid number "
+                                    d=$((d+1))
+                                    u=0 
+				    
+                                fi
+			    
+                            elif [[ $y == "str" ]]; then
+                                if [[ $nv =~ ^[a-zA-Z]+$ ]]; then
+                                    if (( $x == 1 )) && grep -q "^$nv:" "$tname"; then
+                                        echo "Can't have repetitions in Primary Key."
+                                        d=$((d+1))
+                                    else
+                                        sed -i "s/^$f:.*:/$f:$nv:/g" "$tname"
+					echo "Column updated succesfully"
+					exit
+                                    fi
+                                else
+                                    echo "Error ot a valid text."
+                                    d=$((d+1))
+                                    u=0 
+				    
+                                fi
+                            fi
+			    done
+                            if [ $d -gt 0 ]; then
+                                fn1=0
+                            else
+                                fn1=1
+                            fi
+                        else
+                            echo "Please make sure that you entered the correct column name."
+                            fn=0 
+                        fi
+                    done							
+                else
+                    echo "Please make sure that you entered the correct ID."
+                    fv1=0
+                fi
+            done
+        done
+    elif [[ ! $tname =~ ^[a-zA-Z0-9_]+$ ]]; then
+        echo "The name can only consist of letters, numbers, and _."
+        f=0
+    else
+        echo "Error: no such table."
+        f=0
+    fi
+done

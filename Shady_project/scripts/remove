@@ -1,0 +1,60 @@
+#! /usr/bin/bash
+
+cd ./$name 
+PS3="$PWD "
+f=0	
+while [ $f -eq 0 ]
+do
+    read -p " Please Enter the name of the table you want to delete: " tname 
+    if [ -e $tname ] ; then
+        f=1
+	select v in "All" "Column or ID" 
+	do
+		case $v in
+			"All" )
+				echo -n "" > "$tname"
+				echo "Table contents deleted successfully"
+		;;
+			"Column or ID" )
+				fv=0
+				while [ $fv -eq 0 ]
+				do
+					cnt=0
+					read -p "Please enter the name of the column you want to delete by: " n
+					if grep -q "$n:" "${tname}.meta" ; then
+						x=$(awk -F : -v col="$n" 'NR==1{ for (i = 1; i < NF; i++) if ($i == col) print i }' "${tname}.meta") 
+						fv1=0
+						while [ $fv1 -eq 0 ]
+						do
+							fv1=0
+							read -p "Please enter the value you want to delete: " f
+							if grep -q "$f" "$tname" ; then
+								awk -F: -v val="$f" -v d="$x" '$d != val' "$tname" > "$tname.tmp" && mv "$tname.tmp" "$tname"
+								echo "Deleted successfully"
+								exit
+							else
+								echo "Please make sure that you entered a correct value "
+								fv1=0
+							fi
+						done
+					else
+						echo "This column can't be found in the table,please try again "
+						cnt=$((cnt+1))
+					fi
+					if [ $cnt -gt 0 ] ; then
+						fv=0
+					else
+						fv=1
+					fi
+				done
+		;;
+		esac
+	done
+    elif [[ ! $tname =~ ^[a-zA-Z0-9_]+$ ]]; then
+	echo "The name can only consist of letters, numbers and _ "
+	f=0
+    else
+       echo "Error no such table "
+       f=0
+    fi
+done

@@ -1,0 +1,64 @@
+#! /usr/bin/bash
+
+cd ./$name 
+PS3="$PWD "
+f3=0
+
+while [ $f3 -eq 0 ]; do
+    read -p " Please enter Table Name : " tname
+    if [ -f "$tname" ]; then
+        n=$(awk -F : '{if(NR==1){print NF}}' "${tname}.meta")
+        for ((s = 1; s < n; s++)); do
+            x=$(awk -F : -v col="$s" '{if (NR==1) print $col}' "${tname}.meta")
+            d=0
+            f4=0
+            while [ $f4 -eq 0 ]; do
+                d=0
+                read -p "Enter value for column $x: " val
+                y=$(awk -F : -v col="$s" '{if (NR==2) print $col}' "${tname}.meta")
+                if [[ $y == "int" ]]; then
+                    if [[ $val =~ ^[0-9]+$ ]]; then
+                        if (( s == 1 )) && grep -q "^$val:" "$tname"; then
+                            echo "Can't have repetitions in Primary Key."
+                            d=$((d+1))
+                        else
+                            echo -n "$val:" >>"$tname"
+                        fi
+                    else
+                        echo "Error not a valid number "
+                        d=$((d+1))
+                    fi
+                elif [[ $y == "str" ]]; then
+                    if [[ $val =~ ^[a-zA-Z]+$ ]]; then
+                        if (( s == 1 )) && grep -q "^$val:" "$tname"; then
+                            echo "Can't have repetitions in Primary Key."
+                            d=$((d+1))
+                        else
+                            echo -n "$val:" >>"$tname"
+                        fi
+                    else
+                        echo "Error not a valid text "
+                        d=$((d+1))
+                    fi
+                fi
+                if [ $d -gt 0 ]; then
+                    f4=0
+                else
+                    f4=1
+                fi
+            done
+    
+        done
+        echo "" >>"$tname"
+        f3=1
+    elif [[ ! $tname =~ ^[a-zA-Z0-9_]+$ ]]; then
+        echo "The name can only consist of letters, numbers, and _"
+        f3=0
+    else
+        echo "Error no such Table "
+        f3=0
+    fi
+echo "Record inserted successfully"
+exit
+done
+
