@@ -2,7 +2,7 @@
 
 cd ./$name 
 PS3="$PWD "
-select  variable in "Add Table" "Delete Table" "list Tables"  "Insert into Table" "Select" "Remove from Table" "Update Table"
+select  variable in "Add Table" "Delete Table" "List Tables" "Insert into Table" "Select" "Remove from Table" "Update Table"
 do
     case $variable in
         "Add Table")
@@ -62,8 +62,10 @@ do
                             elif cat "${name1}.meta" | grep -q "$fname"; then
                                 echo "This column already exists"
 				cnt1=$((cnt1+1))
-                            else
-                                echo -n "${fname}:" >> "${name1}.meta"
+                            elif (( i == $((fields-1)) )) ; then
+                                echo -n "${fname}" >> "${name1}.meta"
+			    else
+				echo -n "${fname}:" >> "${name1}.meta"
                             fi
                             if [ $cnt1 -gt 0 ]; then
                                 flg1=1
@@ -75,7 +77,7 @@ do
                     f2=1
                 fi
             done
-		echo " " >> "${name1}.meta"
+		echo "" >> "${name1}.meta"
 		for (( n=0; n<$fields; n++ ))	
 		do	
 			echo "Select column $((n+1)) type: "
@@ -83,20 +85,31 @@ do
 			do
 			    case $v in
 			    	"Number" )
-					echo -n "int:" >> "${name1}.meta"
-					break
+					if (( $n == $((fields-1)) )) ; then
+						echo -n "int" >> "${name1}.meta"
+						break
+					else
+						echo -n "int:" >> "${name1}.meta"
+						break
+					fi
 				;;
 			    	"Text" )
-					echo -n "str:" >> "${name1}.meta"
-					break	
+					if (( $n == $((fields-1)) ));then
+						echo -n "str" >> "${name1}.meta"
+						break
+					else
+						echo -n "str:" >> "${name1}.meta"
+						break
+					fi
 				;;
 			    esac
 			done
 		done
-		echo "Table created successfully"
+		echo "Table and columns created successfully"
+		exit	
             ;;
 	
-        "Remove Table")
+        "Delete Table")
             f1=0
             while [ $f1 -eq 0 ]
             do
@@ -105,6 +118,7 @@ do
                     rm -ir $name1
 		    rm "${name1}.meta"
 		    echo "Table removed successfully"
+		    exit
                     f1=1
                 elif [[ ! $name1 =~ ^[a-zA-Z0-9_]+$ ]]; then
                     echo "The name can only consist of letters, numbers, and _"
@@ -116,8 +130,9 @@ do
             done
             ;;
         
-        "List Tables")
-            ls -F | grep -v / | grep -v ".meta"
+        "List Tables" )
+            ls | grep -v .meta
+	    exit
             ;;
 	"Insert into Table")
 	    cd $OLDPWD

@@ -12,7 +12,9 @@ do
 	do
 		case $v in
 			"All" )
+				head -n 1 "${tname}.meta"
 				cat $tname
+				exit
 		;;
 			"Column" )
 				fv=0
@@ -21,20 +23,20 @@ do
 					cnt=0
 					read -p "Please enter the name of the column: " n
 					if grep -q "$n:" "${tname}.meta" ; then
-						x=$(awk -F : -v col="$n" 'NR==1{ for (i = 1; i < NF; i++) if ($i == col) print i }' "${tname}.meta") 
+						x=$(awk -F : -v col="$n" 'NR==1{ for (i = 1; i <=NF; i++) if ($i == col) print i }' "${tname}.meta") 
 						fv1=0
 						while [ $fv1 -eq 0 ]
 						do
 							fv1=0
 							read -p "Please enter search value: " f
-							if grep -q "$f" "$tname" ; then
-								y=$(awk -F: -v val="$f" -v d="$x" '{for (i=1; i<NF; i++) { if (i == d && $i == val) { print } } }' "$tname")
-
-								echo $y
-								exit
-							else
+							y=$(awk -F: -v val="$f" -v d="$x" '{for (i=1; i<=NF; i++) { if (i == d && $i == val) { print } } }' "$tname")
+							if [ -z $y ];then 
 								echo "Please make sure that you entered the correct value "
 								fv1=0
+							else
+								head -n 1 "${tname}.meta"
+								echo $y
+								exit
 							fi
 						done
 					else
@@ -54,8 +56,8 @@ do
 				do
 					cnt=0
 					read -p "Please enter the name of the column: " n
-					if grep -q "$n:" "${tname}.meta" ; then
-						x=$(awk -F : -v col="$n" 'NR==1{ for (i = 1; i < NF; i++) if ($i == col) print i }' "${tname}.meta") 
+					if grep -q "$n" "${tname}.meta" ; then
+						x=$(awk -F : -v col="$n" 'NR==1{ for (i = 1; i <= NF; i++) if ($i == col) print i }' "${tname}.meta") 
 						cut -d ":" -f "$x" "$tname"
 						fv1=0
 						exit

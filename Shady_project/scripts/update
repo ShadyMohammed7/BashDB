@@ -13,15 +13,15 @@ while [ $f -eq 0 ]; do
             while [ $fv1 -eq 0 ]; do
                 fv1=0
                 read -p "Please enter ID: " f
-                if grep -q "^$f:" "$tname"; then
-                    y=$(awk -F : -v val="$f" -v d="$x" '{for (i=1; i<NF; i++) { if (i == d && $i == val) { print NR } } }' "$tname")
-                    fn=0
+                y=$(awk -F : -v val="$f" '{for (i=1; i<NF; i++) { if (i == 1 && $i == val) { print NR } } }' "$tname")
+                fn=0
+		if [ ! -z "$y" ] ; then
                     while [ $fn -eq 0 ]; do
                         fn=1
                         read -p "Please enter the column you want to update: " cn
                         if grep -q "$cn" "${tname}.meta"; then
                             fn1=0
-                            x=$(awk -F : -v col="$cn" 'NR==1{ for (i = 1; i < NF; i++) if ($i == col) print i }' "${tname}.meta")
+                            x=$(awk -F : -v col="$cn" 'NR==1{ for (i = 1; i <= NF; i++) if ($i == col) print i }' "${tname}.meta")
                             d=0
 			    u=0
 			    while [ $u -eq 0 ]
@@ -35,7 +35,8 @@ while [ $f -eq 0 ]; do
                                         echo "Can't have repetitions in Primary Key."
                                         d=$((d+1))
                                     else
-                                        sed -i "s/^$f:.*:/$f:$nv:/g" "$tname"
+					u=$(awk -F: -v field="$x" -v id="$f" '{ if ($1 == id) print $field }' "$tname")
+                                        sed -i "/^$f:/ s/$u/$nv/g" "$tname"
 					echo "Column updated succesfully"
 					exit
                                     fi
@@ -52,12 +53,13 @@ while [ $f -eq 0 ]; do
                                         echo "Can't have repetitions in Primary Key."
                                         d=$((d+1))
                                     else
-                                        sed -i "s/^$f:.*:/$f:$nv:/g" "$tname"
+					u=$(awk -F: -v field="$x" -v id="$f" '{ if ($1 == id) print $field }' "$tname")
+					sed -i "/^$f:/ s/$u/$nv/g" "$tname"
 					echo "Column updated succesfully"
 					exit
                                     fi
                                 else
-                                    echo "Error ot a valid text."
+                                    echo "Error not a valid text."
                                     d=$((d+1))
                                     u=0 
 				    

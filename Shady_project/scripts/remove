@@ -14,6 +14,7 @@ do
 			"All" )
 				echo -n "" > "$tname"
 				echo "Table contents deleted successfully"
+				exit
 		;;
 			"Column or ID" )
 				fv=0
@@ -22,13 +23,14 @@ do
 					cnt=0
 					read -p "Please enter the name of the column you want to delete by: " n
 					if grep -q "$n:" "${tname}.meta" ; then
-						x=$(awk -F : -v col="$n" 'NR==1{ for (i = 1; i < NF; i++) if ($i == col) print i }' "${tname}.meta") 
+						x=$(awk -F : -v col="$n" 'NR==1{ for (i = 1; i <= NF; i++) if ($i == col) print i }' "${tname}.meta") 
 						fv1=0
 						while [ $fv1 -eq 0 ]
 						do
 							fv1=0
 							read -p "Please enter the value you want to delete: " f
-							if grep -q "$f" "$tname" ; then
+							if cut -d : -f $x $tname 2>/dev/null | grep -q $f ; then
+
 								awk -F: -v val="$f" -v d="$x" '$d != val' "$tname" > "$tname.tmp" && mv "$tname.tmp" "$tname"
 								echo "Deleted successfully"
 								exit
